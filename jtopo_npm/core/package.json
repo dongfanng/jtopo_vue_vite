@@ -1,0 +1,14 @@
+{
+    "name": "@jtopo/core",
+    "version": "2.5.3",
+    "author": "jitusoft",
+    "description": "javascript topo graph engine",
+    "module": "./index.js",
+    "main": "./index.umd.cjs",
+    "types": "./src/index.d.ts",
+    "files": [
+        "/src",
+        "*.js"
+    ],
+    "license": "商业许可"
+}
