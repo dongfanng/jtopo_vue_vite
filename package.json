@@ -10,6 +10,11 @@
   "dependencies": {
     "@jtopo/core": "file:jtopo_npm/core",
     "@jtopo/editor": "file:jtopo_npm/editor",
+    "@topo/core": "file:topo_npm/core",
+    "@topo/editor": "file:topo_npm/editor",
+    "dat.gui": "^0.7.9",
+    "naive-ui": "^2.38.2",
+    "sass": "^1.77.7",
     "vue": "^3.2.25"
   },
   "devDependencies": {

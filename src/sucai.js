@@ -1,3 +1,4 @@
+/**  */
 // 图片节点
 {
     var imgNode = new Node('SVG', 200, -127, 64, 64);
@@ -23,14 +24,22 @@ inputSystem.on('mousedown', (event) => {
 // 监听鼠标移动事件
 inputSystem.on('mousemove', (event) => {
     const target = inputSystem.target;
+    // 打印目标节点信息，便于调试
+    console.log('目标节点:', target);
+    console.log('鼠标位置:', event.x, event.y); // 打印鼠标相对于页面的位置信息
+
+    // 检查目标是否存在并且可拖拽
     if (target && target.draggable) {
         const dragData = target.dragData;
+        // 计算鼠标相对于起始位置的偏移量
         const offsetX = event.x - dragData.startX;
         const offsetY = event.y - dragData.startY;
+        // 设置目标节点的新坐标
         target.x = dragData.startNodeX + offsetX;
         target.y = dragData.startNodeY + offsetY;
     }
 });
+
 
 // 监听鼠标释放事件
 inputSystem.on('mouseup', () => {
@@ -40,3 +49,5 @@ inputSystem.on('mouseup', () => {
         delete target.dragData;
     }
 });
+
+

@@ -1,0 +1,14 @@
+{
+    "name": "@topo/core",
+    "version": "2.5.0",
+    "author": "rambo",
+    "description": "javascript topo graph engine",
+    "module": "./index.js",
+    "main": "./index.js",
+    "types": "./types/index.d.ts",
+    "files": [
+        "/src",
+        "*.js"
+    ],
+    "license": "商业许可"
+}

@@ -1,0 +1,17 @@
+{
+    "name": "@topo/editor",
+    "version": "2.4.0",
+    "author": "jitusoft",
+    "description": "javascript topo graph engine",
+    "module": "./index.js",
+    "main": "./index.umd.cjs",
+    "types": "./types/index.d.ts",
+    "files": [
+        "/src",
+        "*.js"
+    ],
+    "license": "商业许可",
+    "dependencies": {
+        "@topo/core": "^2.4.0"
+    }
+}
