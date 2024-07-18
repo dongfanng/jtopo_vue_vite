@@ -1,95 +1,99 @@
 <template>
   <div ref="drawContainer" class="drawContainer">
     <n-message-provider>
-      <!-- 用于显示节点信息的容器 -->
-      <div class="nodeInfoBox">
-        <NodeInfo
-          v-for="item in state.activeNodeList"
-          :nodeTarget="item"
-          @nodeForm="handleUpdateNode"
-          @closeInfo="handleActiveClose"
-          :key="item.id"
-        ></NodeInfo>
-      </div>
+      <!-- 节点信息显示模块 -->
+      <NodeInfo :showInfo="state.isShowInfo" @update:showInfo="handleClose" @nodeForm="handleUpdateNode"
+        :nodeTarget="state.clickedNode" class="nodeInfoBox">
+      </NodeInfo>
+      <!-- 拖拽模块 -->
+      <ComponentBox class="componentBox" @draggedNode="handleDragedNode"></ComponentBox>
     </n-message-provider>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, nextTick, reactive, watch } from "vue";
-import { Stage, Layer, Node } from "@topo/core";
-import { Editor, IconsPanel } from "@topo/editor";
-import { nodeTemplateData, leftPanelConfig } from "./DataService";
 import NodeInfo from "./components/NodeInfo.vue";
+import ComponentBox from "./components/ComponentBox.vue";
+import { onMounted, ref, reactive, toRaw } from "vue";
+import { Stage, Layer, Node } from "@topo/core";
+import { Editor } from "@topo/editor";
+import { nodeTemplateData } from "./DataService"; // 初始化节点信息
 import { NMessageProvider } from "naive-ui";
 
-// 定义响应式状态
 const state = reactive({
-  isShowInfo: false, // 是否显示单个信息
-  clickedNode: null,
-  activeNodeList: [], // 当前选中的node节点
+  isShowInfo: false, //节点信息面板
+  clickedNode: null,  //当前选中选中节点或连线
+  dragItem: {}, //拖拽的新增节点信息
 });
 
-const drawContainer = ref(null); // 绘图容器的引用
-let stage = null; // 舞台实例
-let layer = null; // 图层实例
-let editor = null; // 编辑器实例
+const drawContainer = ref(null);
+let stage = null; //公共画布
+let layer = null; //公共图层
+let editor = null; //编辑器
 
-// 组件挂载时初始化编辑器
 onMounted(() => {
-  nextTick(() => {
-    if (drawContainer.value) {
-      initEditor();
-    } else {
-      console.error("drawContainer is not initialized");
-    }
-  });
+  //初始化编辑器
+  initEditor();
+  // 添加初始化节点
+  initNodeAdd(nodeTemplateData);
 });
 
-// 初始化编辑器函数
+/**
+ * 初始化编辑器
+ */
 function initEditor() {
-  stage = new Stage(drawContainer.value); // 创建舞台
-  layer = new Layer(); // 创建图层
-  stage.addChild(layer); // 将图层添加到舞台
+  stage = new Stage(drawContainer.value);
+  layer = new Layer();
+  stage.addChild(layer);
+  layer.showAxis();
+  stage.show();
 
-  layer.showAxis(); // 显示坐标轴
-  stage.show(); // 显示舞台
+  editor = new Editor(stage);
+  editor.LinkClassName = "AutoFoldLink"; // 设置连线样式
 
-  editor = new Editor(stage); // 创建编辑器
 
-  let iconPanel = new IconsPanel(stage); // 创建图标面板
-  iconPanel.setConfig(leftPanelConfig).show(); // 配置并显示图标面板
-
-  // 处理拖拽事件
-  editor.on("drop", () => {
-    let e = stage.inputSystem.event;
+  // 画布接收到拖拽结束事件时
+  editor.on("drop", (e) => {
     e.preventDefault();
 
-    const configItem = iconPanel.getDragItem();
+    //  获取原始对象
+    const rawNode = toRaw(state.dragItem);
+    console.log("rawNode", rawNode);
+    // 获取左侧面板拖拽’项‘对应的配置
+    // const configItem = iconPanel.getDragItem();
+    const configItem = rawNode;
+    // const configItem = state.dragItem;
+
+    console.log("configItem", configItem); //Object{name:"host",arrt:{...},styles:{...}}
+
+    // 根据配置的类名称创建实例
     const instance = editor.create(configItem.className);
 
+    // 根据配置的属性初始化实例
+    // 添加节点属性
     if (configItem.attr) {
       Object.assign(instance, configItem.attr);
     }
-
+    // 添加节点样式
     if (configItem.styles) {
       instance.css(configItem.styles);
     }
   });
 
-  // 处理鼠标按下事件
+  // 鼠标点中的对象在右侧显示属性面板
   stage.inputSystem.on("mousedown", () => {
     const target = stage.inputSystem.target;
     if (target == null) {
       return;
     }
-    activeNodeList(target); // 更新选中的节点列表
-    state.isShowInfo = true; // 显示节点信息
+    state.clickedNode = target;
+    state.isShowInfo = true;
   });
 
-  editor.LinkClassName = "AutoFoldLink"; // 设置连接线的类名
+  // 鼠标画出的连接线类型
+  // editor.LinkClassName = "AutoFoldLink"; //移到函数外面会报错 稍后修改
 
-  // 处理绘制线条开始事件
+  // 当鼠标画出线时
   editor.on("drawLineStart", (event) => {
     let link = event.object;
     link.css({
@@ -98,86 +102,80 @@ function initEditor() {
     });
   });
 
-  // 处理绘制线条结束事件
+  // 鼠标划线结束
   editor.on("drawLineEnd", (event) => {
     let link = event.object;
     link.css({
       strokeStyle: "black",
     });
+    console.log("划线结束");
   });
 
-  // 显示概览
-  // stage.showOverview({
-  //   left: 0,
-  //   bottom: -1,
-  // });
+  //默认选择编辑
+  // stage.setMode("edit");
 
-  render(nodeTemplateData); // 渲染节点数据
-
-  editor.openLasted(); // 打开最近的编辑器状态
+  // 去掉自带的编辑器右键菜单
+  // editor.popupMenu.remove();
 }
 
-// 渲染节点数据函数
-function render(data) {
+// 渲染初始化节点数据
+function initNodeAdd(data) {
   data.forEach((item, index) => {
     const node = new Node(item.label, index * 100, 0, 64, 64);
     node.setImage(item.image);
     node.css({
-      font: "bold 12px Arial",
+      // fillStyle: item.color || "orange",
+      font: "bold 14px arial",
     });
     layer.addChild(node);
   });
 }
 
-// 处理节点信息更新
+//关闭节点信息
+function handleClose(val) {
+  state.isShowInfo = val;
+}
+//更新节点数据
 function handleUpdateNode(val) {
   let { formData, targetNode } = val;
   targetNode.text = formData.text;
   targetNode.id = formData.id;
 }
-
-// 更新选中节点列表
-function activeNodeList(node) {
-  if (state.activeNodeList.some((item) => item.id === node.id)) {
-    return;
-  } else {
-    state.activeNodeList.push(node);
-  }
-}
-
-// 处理关闭节点信息事件
-function handleActiveClose(val) {
-  let hasIdx = state.activeNodeList.findIndex((m) => m.id === val.nodeId);
-  if (hasIdx === -1) return;
-  state.activeNodeList.splice(hasIdx, 1);
+//存储拖拽的节点对象
+function handleDragedNode(dragNode) {
+  state.dragItem = dragNode;
 }
 </script>
 
 <style scoped>
 .drawContainer {
   height: calc(100vh - 50px);
-  width: 100%;
+  /* 占满全部宽度后页面疯狂抖动 */
+  width: calc(100% - 1px);
   /* border: 1px solid gray; */
 }
+
 .nodeInfoBox {
   position: absolute;
   right: 20px;
   top: 50px;
-  z-index: 999;
+  z-index: 100;
   width: 30vh;
-  max-height: 70vh;
-  overflow-y: auto;
+  height: auto;
 }
 
-/* 滚动条宽度 */
-::-webkit-scrollbar {
-  width: 0.5vh;
-  background-color: transparent;
+/* 拖拽模板 */
+.componentBox {
+  position: absolute;
+  left: 0px;
+  top: 50px;
+  z-index: 100;
+  width: 50px;
+  height: auto;
 }
 
-/* 滚动条颜色 */
-::-webkit-scrollbar-thumb {
-  background-color: rgba(#fff, 0.1);
-  border-radius: 0.1vh;
+/* 设置画布高度 */
+:deep(.layer_container) {
+  height: 100% !important;
 }
 </style>

@@ -1,28 +1,17 @@
 <template>
-  <div class="infoBox">
+  <div class="infoBox" v-show="showInfo">
     <n-card title="节点信息" closable @close="handleClose">
-      <n-form
-        label-width="60px"
-        label-placement="left"
-        ref="formRef"
-        :model="state.formData"
-        :rules="rules"
-        size="small"
-        label-align="left"
-      >
-        <n-form-item label="名称:" path="text">
+      <n-form label-width="100px" label-placement="left" ref="formRef" :model="state.formData" :rules="rules"
+        size="small" label-align="left">
+        <n-form-item label="节点名称:" path="text">
           <n-text v-if="!state.isEditor">{{ state.formData.text }}</n-text>
           <n-input v-else v-model:value="state.formData.text" />
         </n-form-item>
-        <n-form-item label="ID:" path="id">
-          <n-text> {{ state.formData.id }}</n-text>
+        <n-form-item label="节点ID:" path="id">
+          <n-text>{{ state.formData.id }}</n-text>
         </n-form-item>
         <div class="btnList">
-          <n-button
-            type="info"
-            v-if="!state.isEditor"
-            @click="state.isEditor = true"
-          >
+          <n-button type="info" v-if="!state.isEditor" @click="state.isEditor = true">
             修改
           </n-button>
           <n-button type="info" v-else @click="handleSubmit"> 保存 </n-button>
@@ -33,7 +22,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, watch, ref } from "vue";
+import { computed, reactive, watch, ref } from "vue";
 import {
   NCard,
   NButton,
@@ -45,11 +34,15 @@ import {
 } from "naive-ui";
 
 const message = useMessage();
-const emit = defineEmits(["nodeForm", "closeInfo"]);
+const emit = defineEmits(["update:showInfo", "nodeForm"]);
 const props = defineProps({
   nodeTarget: {
     type: Object,
     default: () => null,
+  },
+  showInfo: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -67,7 +60,7 @@ const showInfo = computed({
     return props.showInfo;
   },
   set(val) {
-    emit("closeInfo", { isShow: val, nodeId: state.formData.id });
+    emit("update:showInfo", val);
   },
 });
 
@@ -84,26 +77,35 @@ watch(
 
 const handleClose = () => {
   showInfo.value = false;
-  emit("closeInfo", state.formData.id);
   console.log("关闭卡片");
 };
 
-const handleSubmit = () => {
-  formRef.value?.validate(async (errors) => {
-    emit("nodeForm", {
-      formData: state.formData,
-      targetNode: props.nodeTarget,
-    });
-    state.isEditor = false;
-    message.success("修改成功");
+function handleSubmit(e) {
+  e.preventDefault();
+  const messageReactive = message.loading("Verifying", {
+    duration: 0,
   });
-};
+  formRef.value?.validate((errors) => {
+    if (!errors) {
+      emit("nodeForm", {
+        formData: state.formData,
+        targetNode: props.nodeTarget,
+      });
+      state.isEditor = false;
+      message.success("修改成功");
+    } else {
+      message.error("Invalid");
+      console.log("errors", errors);
+    }
+    messageReactive.destroy();
+  });
+}
 
 const rules = {
   text: {
     required: true,
     message: "请输入节点名称",
-    trigger: "change",
+    trigger: ["input", "blur"],
   },
 };
 </script>
@@ -113,10 +115,10 @@ const rules = {
   width: 100%;
   height: auto;
 }
-.btnList{
+
+.btnList {
   display: flex;
   flex-flow: row nowrap;
   flex-direction: row-reverse;
-  
 }
 </style>

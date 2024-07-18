@@ -12,6 +12,7 @@ export const leftPanelConfig = {
             name: 'cloud',
             className: 'Node',
             iconHtml: `<img width="100%" style="padding:2px;" src="src/assets/img/cloud.png">`,
+            imgSrc: "src/assets/img/cloud.png",
             attr: {
                 text: 'cloud',
                 imageSrc: 'src/assets/img/cloud.png'
@@ -27,6 +28,7 @@ export const leftPanelConfig = {
             name: 'host',
             className: 'Node',
             iconHtml: `<img width="100%" style="padding:2px;" src="src/assets/img/host.png">`,
+            imgSrc: "src/assets/img/host.png",
             attr: {
                 text: 'host',
                 imageSrc: 'src/assets/img/host.png'
@@ -42,6 +44,7 @@ export const leftPanelConfig = {
             name: 'monitor',
             className: 'Node',
             iconHtml: `<img width="100%" style="padding:2px;" src="src/assets/img/monitor.png">`,
+            imgSrc: "src/assets/img/monitor.png",
             attr: {
                 text: 'monitor',
                 imageSrc: 'src/assets/img/monitor.png'
@@ -51,21 +54,6 @@ export const leftPanelConfig = {
                 border: '0px',
                 color: 'black',
                 backgroundColor: 'rgba(255,255,255,0.01)',
-            }
-        },
-        ,
-        {
-            name: '直线',
-            className: 'Link',
-            iconHtml: `
-            <svg width="100%" height="100%">
-            <line x1="5" y1="21" x2="35" y2="21" stroke="black" stroke-width="1"/>
-            </svg>`,
-            attr: {
-                text: '直线',
-            },
-            styles: {
-                'lineWidth': 2,
             }
         }
     ]
